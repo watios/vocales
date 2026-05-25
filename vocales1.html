@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Juegos CBIT San Pedro - Atrapa la Vocal</title>
+    <style>
+        :root {
+            --primary-bg: #e0f7fa;
+            --text-color: #37474f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 70%, #01579b 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            text-align: center;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 600px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .cbit-header { color: #00838f; letter-spacing: 0.5px; }
+
+        .vocal-badge {
+            background: #37474f;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 2rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        #instruccion-texto {
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #00acc1;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .icon-btn {
+            background: #e0f7fa;
+            border: 1px solid #b2ebf2;
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #escenario {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        #pantalla-inicio {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(1, 87, 155, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            padding: 20px;
+        }
+        .btn-jugar {
+            background: #fbc02d;
+            color: #37474f;
+            border: none;
+            padding: 16px 45px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+
+        .arrecife { position: absolute; bottom: -10px; width: 100%; height: 50px; background: #8d6e63; border-radius: 50% 50% 0 0 / 20px 20px 0 0; z-index: 1; }
+        .coral-decoracion { position: absolute; bottom: 25px; font-size: 2rem; z-index: 2; }
+        .alga { position: absolute; bottom: 30px; font-size: 2.8rem; z-index: 2; transform-origin: bottom center; animation: balanceoAlga 4s infinite alternate; }
+
+        .burbuja {
+            position: absolute;
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(224,247,250,0.4) 50%, rgba(38,198,218,0.8) 100%);
+            box-shadow: inset 0 0 15px rgba(255,255,255,0.7), 0 6px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 5;
+        }
+        .error-anim { animation: vibrar 0.3s linear; }
+        .pop-anim { transform: scale(1.4); opacity: 0; transition: transform 0.1s, opacity 0.1s; }
+
+        .pez-fondo {
+            position: absolute;
+            font-size: 2.2rem;
+            z-index: 1;
+            filter: drop-shadow(0 3px 4px rgba(0,0,0,0.2));
+        }
+
+        #pantalla-palabra {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 25px 35px;
+            border-radius: 30px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20;
+            width: 85%;
+            max-width: 420px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 4px solid #00acc1;
+        }
+        #pantalla-palabra.activo {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+        #palabra-texto { font-size: 2.6rem; font-weight: 900; color: #37474f; text-transform: uppercase; }
+        #palabra-texto span { color: #e53935; border-bottom: 4px solid #e53935; }
+        #palabra-imagen { font-size: 5rem; margin: 15px; cursor: pointer; }
+
+        .btn-siguiente { background: #43a047; color: white; border: none; padding: 10px 25px; border-radius: 40px; font-size: 1.2rem; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+        footer {
+            width: 100%;
+            padding: 8px 12px;
+            background: #006064;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+        }
+        .fila-footer { display: flex; justify-content: space-around; align-items: center; font-size: 0.9rem; }
+        .marcador { background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-weight: bold; }
+        .control-item { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; }
+        .control-item input { accent-color: #26c6da; cursor: pointer; }
+
+        @keyframes balanceoAlga { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); } }
+        @keyframes vibrar { 0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-6px); } 40%{ transform:translateX(6px); } 60%{ transform:translateX(-4px); } 80%{ transform:translateX(4px); } }
+    </style>
+</head>
+<body>
+
+<div id="pantalla-inicio">
+    <h2 style="font-size: 2.3rem;">🎈 ¡Atrapa la Vocal! 🌊</h2>
+    <p style="margin: 12px; font-size: 1.1rem;">Toca las burbujas correctas.</p>
+    <button class="btn-jugar" id="btn-iniciar">▶ JUGAR</button>
+</div>
+
+<header>
+    <div class="meta-header">
+        <span class="cbit-header">🏫 CBIT SAN PEDRO</span>
+        <div id="progreso-vocal" style="font-size: 1.2rem; letter-spacing: 2px;">☆☆☆☆☆</div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; margin: 2px 0;">
+        <div class="vocal-badge" id="vocalBadge">🎯 <span id="vocalObjetivoMostrar">?</span></div>
+        <div id="instruccion-texto">🔊 Esperando...</div>
+    </div>
+    <div class="control-buttons">
+        <button class="icon-btn" id="btn-reset">🔄 Reiniciar</button>
+        <button class="icon-btn" id="btn-mute-voice">🔊 Voz: ON</button>
+    </div>
+</header>
+
+<main id="escenario">
+    <div class="arrecife"></div>
+    <div class="alga" style="left: 6%;">🌿</div>
+    <div class="coral-decoracion" style="left: 18%;">🪸</div>
+    <div class="alga" style="left: 35%;">🌿</div>
+    <div class="alga" style="left: 65%;">🌿</div>
+    <div class="coral-decoracion" style="left: 78%;">🪸</div>
+    
+    <div id="pantalla-palabra">
+        <div id="palabra-imagen"></div>
+        <div id="palabra-texto"></div>
+        <button class="btn-siguiente" id="btn-siguiente-palabra">Siguiente ➡️</button>
+    </div>
+</main>
+
+<footer>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+        <div class="control-item"><label>Vel</label><input type="range" id="control-vel" min="1" max="6" step="0.2" value="2.5"></div>
+        <div class="control-item"><label>Mus</label><input type="range" id="control-vol-mus" min="0" max="0.15" step="0.01" value="0.04"></div>
+        <div class="control-item"><label>SFX</label><input type="range" id="control-vol-sfx" min="0" max="0.3" step="0.01" value="0.15"></div>
+    </div>
+    <div class="fila-footer">
+        <div class="marcador">✅ Ok: <span id="puntos-Ok">0</span></div>
+        <div class="marcador">🔘 Total: <span id="puntos-Total">0</span></div>
+        <div class="marcador">🏆 Vocales: <span id="vocales-completadas">0</span>/5</div>
+    </div>
+</footer>
+
+<script>
+    const vocales = ['A','E','I','O','U'];
+    const diccionario = {
+        'A':[{txt:'AVIÓN',emo:'✈️'},{txt:'ÁRBOL',emo:'🌳'},{txt:'ABEJA',emo:'🐝'},{txt:'AGUA',emo:'💧'},{txt:'ARAÑA',emo:'🕷️'}],
+        'E':[{txt:'ESTRELLA',emo:'⭐'},{txt:'ELEFANTE',emo:'🐘'},{txt:'ESPEJO',emo:'🪞'},{txt:'ESCOBA',emo:'🧹'},{txt:'ESCALERA',emo:'🪜'}],
+        'I':[{txt:'IGUANA',emo:'🦎'},{txt:'IMÁN',emo:'🧲'},{txt:'IGLESIA',emo:'⛪'},{txt:'ISLA',emo:'🏝️'},{txt:'IGLÚ',emo:'🧊'}],
+        'O':[{txt:'OSO',emo:'🐻'},{txt:'OJO',emo:'👁️'},{txt:'OVEJA',emo:'🐑'},{txt:'OREJA',emo:'👂'},{txt:'OLLA',emo:'🍲'}],
+        'U':[{txt:'UVA',emo:'🍇'},{txt:'UNICORNIO',emo:'🦄'},{txt:'UNO',emo:'1️⃣'},{txt:'UÑA',emo:'💅'},{txt:'UNIVERSO',emo:'🌌'}]
+    };
+    const pecesEmojis = ['🐟','🐠','🐡','🐙'];
+
+    let vocalObjetivo = '';
+    let aciertosVocalActual = 0;
+    let aciertosTotales = 0;
+    let intentosTotales = 0;
+    let burbujasActivas = [];
+    let juegoActivo = false;
+    let velocidadBase = 2.5;
+    let vocalesCompletadasSet = new Set();
+    let mostrandoPalabra = false;
+    let intervalReposicion = null;
+    let pecesActivos = [];
+    let animationFramePeces = null;
+    let vozMuteada = false;
+    let palabraActualObjeto = null;
+
+    let audioCtx = null;
+    let musicaGain = null, sfxGain = null;
+    let volumenMusica = 0.04, volumenSFX = 0.15;
+    let melodiaInterval = null;
+    let notaIndex = 0;
+    const notas = [261.63, 293.66, 329.63, 392.00, 440.00];
+
+    const escenario = document.getElementById('escenario');
+    const txtInstruccion = document.getElementById('instruccion-texto');
+    const lblOk = document.getElementById('puntos-Ok');
+    const lblTotal = document.getElementById('puntos-Total');
+    const progresoDiv = document.getElementById('progreso-vocal');
+    const tarjetaPalabra = document.getElementById('pantalla-palabra');
+    const txtPalabra = document.getElementById('palabra-texto');
+    const imgPalabra = document.getElementById('palabra-imagen');
+    const vocalBadgeSpan = document.getElementById('vocalObjetivoMostrar');
+    const vocalesCompletadasSpan = document.getElementById('vocales-completadas');
+    const controlVel = document.getElementById('control-vel');
+    const controlVolMus = document.getElementById('control-vol-mus');
+    const controlVolSfx = document.getElementById('control-vol-sfx');
+
+    function guardarConfig() {
+        localStorage.setItem('v_vel', velocidadBase);
+        localStorage.setItem('v_mus', volumenMusica);
+        localStorage.setItem('v_sfx', volumenSFX);
+    }
+    
+    function cargarConfig() {
+        let v = localStorage.getItem('v_vel'); if(v) { velocidadBase = parseFloat(v); controlVel.value = velocidadBase; }
+        let vm = localStorage.getItem('v_mus'); if(vm) { volumenMusica = parseFloat(vm); controlVolMus.value = volumenMusica; }
+        let vs = localStorage.getItem('v_sfx'); if(vs) { volumenSFX = parseFloat(vs); controlVolSfx.value = volumenSFX; }
+    }
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            musicaGain = audioCtx.createGain();
+            sfxGain = audioCtx.createGain();
+            musicaGain.gain.value = volumenMusica;
+            sfxGain.gain.value = volumenSFX;
+            musicaGain.connect(audioCtx.destination);
+            sfxGain.connect(audioCtx.destination);
+            iniciarMusicaFondo();
+        } else if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function iniciarMusicaFondo() {
+        if(melodiaInterval) clearInterval(melodiaInterval);
+        melodiaInterval = setInterval(() => {
+            if(!juegoActivo || volumenMusica===0 || !audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(musicaGain);
+                osc.type = 'triangle';
+                osc.frequency.value = notas[notaIndex % notas.length];
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime+0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.8);
+                osc.start(); osc.stop(audioCtx.currentTime+0.8);
+                notaIndex = (notaIndex+1)%notas.length;
+            } catch(e) { console.log(e); }
+        }, 1200);
+    }
+
+    function reproducirPop() {
+        if(!audioCtx || volumenSFX===0) return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(sfxGain);
+            osc.type = 'sine';
+            osc.frequency.value = 550;
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime+0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.1);
+            osc.start(); osc.stop(audioCtx.currentTime+0.1);
+        } catch(e){}
+    }
+
+    function reproducirErrorSFX() {
+        if(!audioCtx || volumenSFX===0) return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(sfxGain);
+            osc.type = 'sawtooth';
+            osc.frequency.value = 140;
+            osc.frequency.linearRampToValueAtTime(90, audioCtx.currentTime+0.15);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.15);
+            osc.start(); osc.stop(audioCtx.currentTime+0.15);
+        } catch(e){}
+    }
+
+    function hablar(texto) {
+        if(vozMuteada) return;
+        if('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.95;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function actualizarEstrellas() {
+        let est = '';
+        for(let i=0;i<5;i++) est += (i<aciertosVocalActual) ? '⭐' : '☆';
+        progresoDiv.innerText = est;
+    }
+
+    function crearBurbuja(vocalBase) {
+        if(!juegoActivo || mostrandoPalabra) return;
+        const usarMinuscula = Math.random() < 0.4;
+        const letraMostrar = usarMinuscula ? vocalBase.toLowerCase() : vocalBase;
+        
+        const burbuja = document.createElement('div');
+        burbuja.className = 'burbuja';
+        burbuja.innerText = letraMostrar;
+        
+        const colorAleatorio = Math.floor(Math.random()*360);
+        burbuja.style.filter = `hue-rotate(${colorAleatorio}deg)`;
+        
+        const anchoMax = Math.max(200, window.innerWidth - 90);
+        burbuja.style.left = `${5 + Math.random() * anchoMax}px`;
+        
+        let posY = escenario.clientHeight > 0 ? escenario.clientHeight + 40 : 500;
+        burbuja.style.top = `${posY}px`;
+        
+        let offsetVel = Math.random() * 0.6;
+        burbuja.setAttribute('data-off', offsetVel);
+        burbuja.velocidad = velocidadBase + offsetVel;
+        burbuja.vocalData = vocalBase;
+
+        const interactuar = (e) => { 
+            e.preventDefault(); 
+            evaluarIntento(burbuja, vocalBase); 
+        };
+        burbuja.addEventListener('click', interactuar);
+        burbuja.addEventListener('touchstart', interactuar);
+
+        escenario.appendChild(burbuja);
+        burbujasActivas.push(burbuja);
+
+        function moverBurbuja() {
+            if(!burbuja.parentElement) return;
+            if(!juegoActivo || mostrandoPalabra) { 
+                requestAnimationFrame(moverBurbuja); 
+                return; 
+            }
+            posY -= burbuja.velocidad;
+            burbuja.style.top = `${posY}px`;
+            if(posY < -100) {
+                posY = (escenario.clientHeight > 0 ? escenario.clientHeight : 500) + 20;
+                burbuja.style.left = `${5 + Math.random() * (window.innerWidth - 90)}px`;
+            }
+            requestAnimationFrame(moverBurbuja);
+        }
+        requestAnimationFrame(moverBurbuja);
+    }
+
+    function evaluarIntento(elemento, vocalSeleccionada) {
+        if(!juegoActivo || mostrandoPalabra) return;
+        intentosTotales++;
+        lblTotal.innerText = intentosTotales;
+
+        if(vocalSeleccionada === vocalObjetivo) {
+            aciertosTotales++;
+            aciertosVocalActual++;
+            lblOk.innerText = aciertosTotales;
+            reproducirPop();
+            
+            elemento.classList.add('pop-anim');
+            actualizarEstrellas();
+            burbujasActivas = burbujasActivas.filter(b => b !== elemento);
+            setTimeout(() => elemento.remove(), 110);
+            
+            if(aciertosVocalActual >= 5) {
+                finalizarRondaVocal();
+            } else {
+                setTimeout(() => crearBurbuja(vocalObjetivo), 300);
+            }
+        } else {
+            elemento.classList.add('error-anim');
+            reproducirErrorSFX();
+            setTimeout(() => elemento.classList.remove('error-anim'), 300);
+        }
+    }
+
+    function finalizarRondaVocal() {
+        juegoActivo = false;
+        mostrandoPalabra = true;
+        burbujasActivas.forEach(b => b.remove());
+        burbujasActivas = [];
+        
+        vocalesCompletadasSet.add(vocalObjetivo);
+        vocalesCompletadasSpan.innerText = vocalesCompletadasSet.size;
+        
+        if(vocalesCompletadasSet.size === 5) {
+            hablar("¡Felicidades! Completaste todas las vocales.");
+            setTimeout(() => resetCompleto(), 3000);
+            return;
+        }
+        
+        const lista = diccionario[vocalObjetivo];
+        palabraActualObjeto = lista[Math.floor(Math.random()*lista.length)];
+        
+        txtPalabra.innerHTML = `<span>${vocalObjetivo}</span>${palabraActualObjeto.txt.substring(1)}`;
+        imgPalabra.innerText = palabraActualObjeto.emo;
+        tarjetaPalabra.classList.add('activo');
+        
+        pronunciarPalabraActual();
+    }
+
+    function pronunciarPalabraActual() {
+        if(palabraActualObjeto) {
+            hablar(`Letra ${vocalObjetivo}. De ${palabraActualObjeto.txt.toLowerCase()}`);
+        }
+    }
+
+    imgPalabra.addEventListener('click', pronunciarPalabraActual);
+
+    function iniciarNuevaVocal() {
+        juegoActivo = true;
+        mostrandoPalabra = false;
+        tarjetaPalabra.classList.remove('activo');
+        
+        let posibles = vocales.filter(v => !vocalesCompletadasSet.has(v));
+        if(posibles.length === 0) posibles = [...vocales];
+        vocalObjetivo = posibles[Math.floor(Math.random() * posibles.length)];
+        aciertosVocalActual = 0;
+        actualizarEstrellas();
+        
+        vocalBadgeSpan.innerText = vocalObjetivo;
+        const colores = {A:'#e53935',E:'#43a047',I:'#1e88e5',O:'#fb8c00',U:'#8e24aa'};
+        document.querySelector('.vocal-badge').style.backgroundColor = colores[vocalObjetivo] || '#37474f';
+        
+        txtInstruccion.innerText = ` Buscar: ${vocalObjetivo}`;
+        hablar(`Busca la letra ${vocalObjetivo}`);
+        
+        for(let i=0; i<3; i++) crearBurbuja(vocalObjetivo);
+        for(let i=0; i<4; i++) crearBurbuja(vocales[Math.floor(Math.random()*vocales.length)]);
+        
+        if(intervalReposicion) clearInterval(intervalReposicion);
+        intervalReposicion = setInterval(() => {
+            if(juegoActivo && !mostrandoPalabra && burbujasActivas.length < 8) {
+                crearBurbuja(vocales[Math.floor(Math.random()*vocales.length)]);
+            }
+        }, 3500);
+    }
+
+    function resetCompleto() {
+        juegoActivo = false;
+        mostrandoPalabra = false;
+        palabraActualObjeto = null;
+        if(intervalReposicion) clearInterval(intervalReposicion);
+        
+        burbujasActivas.forEach(b => b.remove());
+        burbujasActivas = [];
+        
+        aciertosTotales = 0; intentosTotales = 0; aciertosVocalActual = 0;
+        vocalesCompletadasSet.clear();
+        lblOk.innerText = 0; lblTotal.innerText = 0; vocalesCompletadasSpan.innerText = 0;
+        tarjetaPalabra.classList.remove('activo');
+    }
+
+    function comenzarJuego() {
+        resetCompleto();
+        document.getElementById('pantalla-inicio').style.display = 'none';
+        
+        // Arrancar audio de forma segura tras interacción directa del usuario
+        initAudio();
+        
+        juegoActivo = true;
+        if(pecesActivos.length === 0) crearPecesFondo();
+        iniciarNuevaVocal();
+    }
+
+    function crearPecesFondo() {
+        if(animationFramePeces) cancelAnimationFrame(animationFramePeces);
+        pecesActivos.forEach(p => p.elemento.remove());
+        pecesActivos = [];
+
+        const cantidadPeces = 3;
+        for(let i=0; i<cantidadPeces; i++) {
+            const pez = document.createElement('div');
+            pez.className = 'pez-fondo';
+            pez.innerText = pecesEmojis[Math.floor(Math.random()*pecesEmojis.length)];
+            let dir = Math.random() > 0.5 ? 1 : -1;
+            let posX = dir === 1 ? -60 : window.innerWidth + 60;
+            let posY = 60 + Math.random() * 300;
+            
+            pez.style.top = `${posY}px`;
+            pez.style.left = `${posX}px`;
+            pez.style.transform = dir === 1 ? 'scaleX(-1)' : 'scaleX(1)';
+            
+            escenario.appendChild(pez);
+            pecesActivos.push({
+                elemento: pez,
+                x: posX,
+                y: posY,
+                direccion: dir,
+                velocidad: 0.8 + Math.random() * 1
+            });
+        }
+
+        function animarPeces() {
+            pecesActivos.forEach(p => {
+                if(p.direccion === 1) p.x += p.velocidad; else p.x -= p.velocidad;
+                if((p.direccion === 1 && p.x > window.innerWidth + 70) || (p.direccion === -1 && p.x < -70)) {
+                    p.direccion *= -1;
+                    p.elemento.style.transform = p.direccion === 1 ? 'scaleX(-1)' : 'scaleX(1)';
+                    p.x = p.direccion === 1 ? -60 : window.innerWidth + 60;
+                }
+                p.elemento.style.left = `${p.x}px`;
+            });
+            animationFramePeces = requestAnimationFrame(animarPeces);
+        }
+        animationFramePeces = requestAnimationFrame(animarPeces);
+    }
+
+    document.getElementById('btn-iniciar').addEventListener('click', comenzarJuego);
+    document.getElementById('btn-reset').addEventListener('click', comenzarJuego);
+    
+    document.getElementById('btn-mute-voice').addEventListener('click', () => {
+        vozMuteada = !vozMuteada;
+        document.getElementById('btn-mute-voice').innerText = vozMuteada ? '🔇 Voz: OFF' : '🔊 Voz: ON';
+    });
+
+    document.getElementById('btn-siguiente-palabra').addEventListener('click', () => {
+        if(mostrandoPalabra) {
+            iniciarNuevaVocal();
+        }
+    });
+
+    controlVel.addEventListener('input', (e) => {
+        velocidadBase = parseFloat(e.target.value);
+        burbujasActivas.forEach(b => {
+            let off = parseFloat(b.getAttribute('data-off') || 0);
+            b.velocidad = velocidadBase + off;
+        });
+        guardarConfig();
+    });
+
+    controlVolMus.addEventListener('input', (e) => {
+        volumenMusica = parseFloat(e.target.value);
+        if(musicaGain) musicaGain.gain.value = volumenMusica;
+        guardarConfig();
+    });
+
+    controlVolSfx.addEventListener('input', (e) => {
+        volumenSFX = parseFloat(e.target.value);
+        if(sfxGain) sfxGain.gain.value = volumenSFX;
+        guardarConfig();
+    });
+
+    document.getElementById('instruccion-texto').addEventListener('click', () => {
+        if(juegoActivo && !mostrandoPalabra) hablar(`Busca la letra ${vocalObjetivo}`);
+    });
+
+    cargarConfig();
+</script>
+</body>
+</html>
